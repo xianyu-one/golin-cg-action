@@ -20,7 +20,6 @@ jobs:
 
     - name: Replace String
       run: |
-        cd Golin
         find . -type f -exec sed -i 's/高业尚-SelinuxG/MrXianyu/g' {} +
         find . -type f -exec sed -i 's|https://github.com/selinuxG/Golin/|https://github.com/xianyu-one/golin-cg-action/|g' {} +
 
