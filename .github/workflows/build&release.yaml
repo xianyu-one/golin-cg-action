@@ -1,0 +1,119 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+        - main
+  schedule:
+    - cron: "0 20 * * 1" # 每周一凌晨4点（UTC+8）
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        repository: selinuxG/Golin
+        ref: master
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.21
+
+    - name: Build and compress
+      run: |
+        cd ${{ github.workspace }}
+        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o golin-linux-amd64
+        upx golin-linux-amd64
+
+        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o golin-linux-arm64
+        upx golin-linux-arm64
+
+        GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o golin-windows-amd64.exe
+        upx golin-windows-amd64.exe
+
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o golin-darwin-amd64
+        upx golin-darwin-amd64
+
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o golin-darwin-arm64
+        upx golin-darwin-arm64
+
+
+
+
+    - name: Get latest tag from source repository
+      id: get_latest_tag
+      run: |
+        LATEST_TAG=$(curl -s https://api.github.com/repos/selinuxG/Golin/releases/latest | jq -r '.tag_name')
+        echo "Latest tag from source repository: $LATEST_TAG"
+        echo "::set-output name=latest_tag::$LATEST_TAG"
+      
+    - name: Create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_latest_tag.outputs.latest_tag }}
+        release_name: Release ${{ github.sha }}
+        body: |
+          Automatic release triggered by commit: ${{ github.sha }}
+        draft: false
+        prerelease: false
+      
+      
+      
+
+    - name: Upload release asset - Linux (amd64)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./golin-linux-amd64
+        asset_name: golin-linux-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload release asset - Linux (arm64)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./golin-linux-arm64
+        asset_name: golin-linux-arm64
+        asset_content_type: application/octet-stream
+
+    - name: Upload release asset - Windows
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./golin-windows-amd64.exe
+        asset_name: golin-windows-amd64.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload release asset - macOS (amd64)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./golin-darwin-amd64
+        asset_name: golin-darwin-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload release asset - macOS (arm64)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./golin-darwin-arm64
+        asset_name: golin-darwin-arm64
+        asset_content_type: application/octet-stream
+
