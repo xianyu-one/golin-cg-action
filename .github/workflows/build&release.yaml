@@ -40,7 +40,7 @@ jobs:
       run: |
         LATEST_TAG=$(curl -s https://api.github.com/repos/selinuxG/Golin/releases/latest | jq -r '.tag_name')
         echo "Latest tag from source repository: $LATEST_TAG"
-        echo "latest_tag=${TAG}" >> $GITHUB_OUTPUT
+        echo "::set-output name=latest_tag::$LATEST_TAG"
       
     - name: Create release
       id: create_release
