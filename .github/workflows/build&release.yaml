@@ -18,6 +18,12 @@ jobs:
         repository: selinuxG/Golin
         ref: master
 
+    - name: Replace String
+      run: |
+        cd Golin
+        find . -type f -exec sed -i 's/高业尚-SelinuxG/MrXianyu/g' {} +
+        find . -type f -exec sed -i 's|https://github.com/selinuxG/Golin/|https://github.com/xianyu-one/golin-cg-action/|g' {} +
+
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
@@ -40,7 +46,7 @@ jobs:
       run: |
         LATEST_TAG=$(curl -s https://api.github.com/repos/selinuxG/Golin/releases/latest | jq -r '.tag_name')
         echo "Latest tag from source repository: $LATEST_TAG"
-        echo "::set-output name=latest_tag::$LATEST_TAG"
+        echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
       
     - name: Create release
       id: create_release
@@ -49,7 +55,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.get_latest_tag.outputs.latest_tag }}
-        release_name: Release ${{ github.sha }}
+        release_name: ${{ steps.get_latest_tag.outputs.latest_tag }}
         body: |
           Automatic release triggered by commit: ${{ github.sha }}
         draft: false
